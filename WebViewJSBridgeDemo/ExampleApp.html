@@ -1,0 +1,75 @@
+<!doctype html>
+<html><head>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+	<style type='text/css'>
+		html { font-family:Helvetica; color:#222; }
+		h1 { color:steelblue; font-size:24px; margin-top:24px; }
+		button { margin:0 3px 10px; font-size:12px; }
+		.logLine { border-bottom:1px solid #ccc; padding:4px 2px; font-family:courier; font-size:11px; }
+	</style>
+</head><body>
+    
+	<h1>WebViewJavascriptBridge Demo</h1>
+	<script>
+        
+	window.onerror = function(err) {
+		log('window.onerror: ' + err)
+	}
+    
+    
+    /**
+     *  此为js接入框架的函数
+     */
+    function setupWebViewJavascriptBridge(callback) {
+        if (window.WebViewJavascriptBridge) { return callback(WebViewJavascriptBridge); }
+        if (window.WVJBCallbacks) { return window.WVJBCallbacks.push(callback); }
+        window.WVJBCallbacks = [callback];
+        var WVJBIframe = document.createElement('iframe');
+        WVJBIframe.style.display = 'none';
+        WVJBIframe.src = 'wvjbscheme://__BRIDGE_LOADED__';
+        document.documentElement.appendChild(WVJBIframe);
+        setTimeout(function() { document.documentElement.removeChild(WVJBIframe) }, 0)
+    }
+
+/**
+ *  OC调用的JS函数需在此处注册，调用OC方法也需要在此处调用
+ */
+    setupWebViewJavascriptBridge(function(bridge) {
+		var uniqueId = 1
+		function log(message, data) {
+			var log = document.getElementById('log')
+			var el = document.createElement('div')
+			el.className = 'logLine'
+			el.innerHTML = uniqueId++ + '. ' + message + ':<br/>' + JSON.stringify(data)
+			if (log.children.length) { log.insertBefore(el, log.children[0]) }
+			else { log.appendChild(el) }
+		}
+                                 
+        //注册一个给OC调用的函数，不带参数
+        bridge.registerHandler('WebViewDidLoad',function() {
+            log("WebViewDidLoad")
+        })
+        
+        //注册一一个给OC调用的函数，接受OC传来的一个参数和一个回调处理
+		bridge.registerHandler('OC_Call_JS', function(data, responseCallback) {
+			log('oc调用js －', data)
+			var responseData = { 'Javascript response':'oc调用JS成功!' }
+			log('js被调用后响应－', responseData)
+			responseCallback(responseData)
+		})
+
+		document.body.appendChild(document.createElement('br'))
+
+		var callbackButton = document.getElementById('buttons').appendChild(document.createElement('button'))
+		callbackButton.innerHTML = 'JS_Call_ObjC'
+		callbackButton.onclick = function(e) {
+			e.preventDefault()
+			log('JS call OC')
+			bridge.callHandler('JS_Call_ObjC', {'foo': 'bar'}, function(response) {
+				log('JS call OC sucess and get OC rsp', response)
+			})
+		}
+	})
+	</script>
+	<div id='buttons'></div> <div id='log'></div>
+</body></html>
