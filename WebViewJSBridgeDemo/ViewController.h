@@ -2,7 +2,7 @@
 //  ViewController.h
 //  WebViewJSBridgeDemo
 //
-//  Created by 贺思航 on 14/4/16.
+//  Created by Garen on 14/4/16.
 //  Copyright © 2016年 cgc. All rights reserved.
 //
 
